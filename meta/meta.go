@@ -2,6 +2,7 @@ package meta
 
 import (
 	"fmt"
+	"go-filestore-server/db"
 	"sort"
 )
 
@@ -29,6 +30,25 @@ func init()  {
 func UploadFileMeta(meta FileMeta)  {
 	fmt.Printf("name:%s,fileHash:%s \n",meta.FileName,meta.FileSha1)
 	fileMetas[meta.FileSha1]=meta
+}
+// 新增/更新文件元信息到数据库中
+func UploadFileMetaDB(fileMeta FileMeta)bool  {
+	return db.OnFileUploadFinished(fileMeta.FileSha1,fileMeta.FileName,
+		fileMeta.FileSize,fileMeta.Location)
+}
+
+// 从数据库中获取文件元信息
+func GetFileMetaDB(filehash string)(FileMeta,error)  {
+	fileMeta := FileMeta{}
+	tfile, err := db.GetFileMeta(filehash)
+	if err != nil{
+		return fileMeta,err
+	}
+	fileMeta.FileSize=tfile.FileSize.Int64
+	fileMeta.FileName=tfile.FileName.String
+	fileMeta.Location=tfile.FileAddr.String
+	fileMeta.FileSha1 = tfile.FileHash
+	return fileMeta,nil
 }
 
 // 通过filesha1 获取文件元信息
